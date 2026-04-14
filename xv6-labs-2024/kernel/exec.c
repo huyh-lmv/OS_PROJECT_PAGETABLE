@@ -130,6 +130,7 @@ exec(char *path, char **argv)
 
   /* ----/ This prints out page table when program runs \------ */
   if (p->pid == 1) vmprint(p->pagetable, 0);
+  printf("\n");
   /* ----/ This prints out page table when program runs \------ */
 
   return argc; // this ends up in a0, the first argument to main(argc, argv)

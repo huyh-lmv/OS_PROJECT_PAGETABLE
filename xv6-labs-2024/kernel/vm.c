@@ -297,7 +297,7 @@ freewalk(pagetable_t pagetable)
 
 #define indentation ".."
 void vmprint(pagetable_t pagetable, int level) {
-  if (level == 0) printf("page table %p\n", pagetable);
+  if (level == 0) printf("\npage table %p\n", pagetable);
   
   for (int i = 0; i < 512; i++) {
     pte_t pte = pagetable[i];
@@ -308,7 +308,7 @@ void vmprint(pagetable_t pagetable, int level) {
         if (j < level - 1) printf(" ");
       }
       
-      printf("%d: pte %lx pa %lx\n", i, pte, PTE2PA(pte)); // PTE2PA lay dia chi vat ly
+      printf("%d: pte %p pa %p\n", i, (void*)pte, (void*)PTE2PA(pte)); // PTE2PA lay dia chi vat ly
 
       if ((pte & (PTE_R | PTE_W | PTE_X)) == 0) {
         uint64 child = PTE2PA(pte);

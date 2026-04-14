@@ -194,6 +194,7 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
+	$U/_pgtbltest\
 # 	UNCOMENT THIS AFTER UGETPID() AND PGACESS()
 # 	$U/_pgtbltest\ 
 

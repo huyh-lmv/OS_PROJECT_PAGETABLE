@@ -293,6 +293,31 @@ freewalk(pagetable_t pagetable)
   kfree((void*)pagetable);
 }
 
+// ------------ Bai So 2 --------------\\*
+
+#define indentation ".."
+void vmprint(pagetable_t pagetable, int level) {
+  if (level == 0) printf("page table %p\n", pagetable);
+  
+  for (int i = 0; i < 512; i++) {
+    pte_t pte = pagetable[i];
+
+    if (pte & PTE_V) {
+      for (int j = -1; j < level; j++) {
+        printf("%s", indentation);
+        if (j < level - 1) printf(" ");
+      }
+      
+      printf("%d: pte %lx pa %lx\n", i, pte, PTE2PA(pte)); // PTE2PA lay dia chi vat ly
+
+      if ((pte & (PTE_R | PTE_W | PTE_X)) == 0) {
+        uint64 child = PTE2PA(pte);
+        vmprint((pagetable_t)child, level + 1);
+      }
+    }
+  }
+}
+
 // Free user memory pages,
 // then free page-table pages.
 void

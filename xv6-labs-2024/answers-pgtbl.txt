@@ -1,1 +1,63 @@
-<Place Holder>
+# Bài 1: Tăng tốc system call
+
+Câu hỏi: Những lệnh gọi hệ thống nào khác trong xv6 có thể được tăng tốc bằng cách sử dụng trang chia sẻ này? Hãy giải thích
+
+Trả lời:
+   uptime() có thể được tăng tốc bằng cơ chế trang chia sẻ. uptime() có nhiệm vụ trả về số lượng “tick” (đơn vị thời gian) kể từ khi hệ thống khởi động.
+   Trong cài đặt hiện tại của xv6, mỗi lần gọi uptime(), tiến trình người dùng phải thực hiện một system call để chuyển vào kernel, sau đó kernel đọc biến toàn cục ticks rồi trả về kết quả. Việc chuyển đổi qua lại giữa user mode và kernel mode này gây ra overhead không cần thiết, đặc biệt với một thao tác chỉ đơn giản là đọc một giá trị.
+   Ta có thể tối ưu uptime() bằng cách lưu giá trị ticks vào trang chia sẻ USYSCALL (ở dạng chỉ đọc đối với user). Khi đó, chương trình người dùng có thể đọc trực tiếp giá trị này mà không cần thực hiện system call, tương tự như cách đã làm với getpid().
+
+# Bài 2: In Bảng Trang
+
+Câu hỏi: Với mỗi trang lá trong đầu ra, bạn cần giải thích những gì nó chứa về mặt logic và các bit quyền của nó.
+
+Trả lời: 
+   PTE_V = 0x001 — Trang hợp lệ (Valid)
+   PTE_R = 0x002 — Cho phép đọc (Read)
+   PTE_W = 0x004 — Cho phép ghi (Write)
+   PTE_X = 0x008 — Cho phép thực thi (Execute)
+   PTE_U = 0x010 — Cho phép truy cập ở User mode
+   PTE_A = 0x040 — Trang đã được truy cập (Accessed)
+   PTE_D = 0x080 — Trang đã bị ghi (Dirty)
+
+   Bảng trang kết quả:
+      page table 0x0000000087f4e000
+      ..0: pte 0x0000000021fd2801 pa 0x0000000087f4a000
+      .. ..0: pte 0x0000000021fd2401 pa 0x0000000087f49000
+      .. .. ..0: pte 0x0000000021fd2c1b pa 0x0000000087f4b000
+      .. .. ..1: pte 0x0000000021fd2017 pa 0x0000000087f48000
+      .. .. ..2: pte 0x0000000021fd1c07 pa 0x0000000087f47000
+      .. .. ..3: pte 0x0000000021fd1817 pa 0x0000000087f46000
+      .. .. ..4: pte 0x0000000021fd1417 pa 0x0000000087f45000
+      ..255: pte 0x0000000021fd3401 pa 0x0000000087f4d000
+      .. ..511: pte 0x0000000021fd3001 pa 0x0000000087f4c000
+      .. .. ..510: pte 0x0000000021fd5807 pa 0x0000000087f56000
+      .. .. ..511: pte 0x000000002000180b pa 0x0000000080006000
+
+   Trang 0: 0x0000000021fd2c1b
+      Bit quyền: 0x1b = V, R, W, U
+      Ý nghĩa logic: Trang user read/write, chứa data/heap.
+
+   Trang 1: 0x0000000021fd2017
+      Bit quyền: 0x17 = V, R, W, U
+      Ý nghĩa logic: Trang user read/write, chứa heap hoặc stack.
+
+   Trang 2: 0x0000000021fd1c07
+      Bit quyền: 0x07 = V, R, W
+      Ý nghĩa logic: Trang kernel-only (không có U), thường là trapframe hoặc dữ liệu kernel.
+
+   Trang 3: 0x0000000021fd1817
+      Bit quyền: 0x17 = V, R, W, U
+      Ý nghĩa logic: Trang user read/write, có thể là stack.
+
+   Trang 4: 0x0000000021fd1417
+      Bit quyền: 0x17 = V, R, W, U
+      Ý nghĩa logic: Trang user read/write, thuộc data/heap.
+
+   Trang 510: 0x0000000021fd5807
+      Bit quyền: 0x07 = V, R, W
+      Ý nghĩa logic: Trang kernel-only, dùng cho trapframe (lưu trạng thái khi trap).
+
+   Trang 511: 0x000000002000180b
+      Bit quyền: 0x0b = V, R, X
+      Ý nghĩa logic: Trang trampoline, chứa code chuyển đổi user ↔ kernel, chỉ cho phép execute + read, không cho user truy cập trực tiếp.
